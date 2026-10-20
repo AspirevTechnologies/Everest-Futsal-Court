@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PitchSize {
+  FIVE_A_SIDE  @map("5_A_SIDE")
+  SEVEN_A_SIDE @map("7_A_SIDE")
+}
+
+enum SurfaceType {
+  ARTIFICIAL_TURF
+  RUBBER_INDOOR
+  PARQUET_WOOD
+  HYBRID
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Court {
+  id              String      @id @default(uuid())
+  name            String
+  slug            String      @unique
+  size            PitchSize
+  surface         SurfaceType
+  baseHourlyRate  Float
+  imageUrl        String?
+  isActive        Boolean     @default(true)
+  isIndoor        Boolean     @default(false)
+  hasFloodlights  Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  bookings        Booking[]
+
+  @@map("courts")
+}
+
+model Booking {
+  id              String        @id @default(uuid())
+  referenceNumber String        @unique
+  courtId         String
+  court           Court         @relation(fields: [courtId], references: [id])
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int           @default(60)
+  totalAmount     Float
+  status          BookingStatus @default(CONFIRMED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([courtId, startTime])
+  @@map("bookings")
+}
